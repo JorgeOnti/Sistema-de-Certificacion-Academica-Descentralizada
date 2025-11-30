@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Certificación Académica Blockchain</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"
+      integrity="sha512-M1IqQF9tRV8PC79RVzKgnPxX8kqXTRmQdAKBK2S4uhD8s9i1iKwBm1C4p+KDAA6Uuzfn8/CD7q88rMu4sgkP9g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 20px auto;
+        background: #f5f5f5;
+      }
+      h1, h2 {
+        text-align: center;
+      }
+      .card {
+        background: #ffffff;
+        padding: 16px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      label {
+        display: block;
+        margin-top: 8px;
+      }
+      input {
+        width: 100%;
+        padding: 6px;
+        margin-top: 2px;
+      }
+      button {
+        margin-top: 12px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+      }
+      button:disabled {
+        background: #aaa;
+        cursor: not-allowed;
+      }
+      #status {
+        margin-top: 10px;
+        font-size: 0.9rem;
+      }
+      pre {
+        background: #222;
+        color: #0f0;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Certificación Académica en Blockchain</h1>
+
+    <div class="card">
+      <h2>1. Conexión</h2>
+      <button id="btnConnect">Conectar MetaMask</button>
+      <div id="account"></div>
+      <div id="status"></div>
+    </div>
+
+    <div class="card">
+      <h2>2. Emitir certificado</h2>
+      <label>CertID</label>
+      <input id="certId" placeholder="CERT-001" />
+      <label>Matrícula (studentId)</label>
+      <input id="studentId" placeholder="A01234567" />
+      <label>Programa (degree)</label>
+      <input id="degree" placeholder="Ingenieria en Sistemas" />
+      <label>Fecha de emisión</label>
+      <input id="issuedDate" type="date" />
+      <label>Hash SHA-256 del PDF</label>
+      <input
+        id="documentHash"
+        placeholder="b3f4c1a2d5e6..."
+      />
+      <button id="btnIssue" disabled>Emitir certificado</button>
+    </div>
+
+    <div class="card">
+      <h2>3. Consultar certificado</h2>
+      <label>CertID</label>
+      <input id="lookupCertId" placeholder="CERT-001" />
+      <button id="btnLookup" disabled>Consultar</button>
+      <pre id="lookupResult">{ }</pre>
+    </div>
+
+    <script>
+      const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+
+      const abi = [
+        "function issueCertificate(string certId,string studentId,string degree,string issuedDate,string documentHash) external",
+        "function getCertificate(string certId) view returns (string studentId,string degree,string issuedDate,string documentHash,address issuer,bool exists)"
+      ];
+
+      let provider;
+      let signer;
+      let contract;
+
+      const btnConnect = document.getElementById("btnConnect");
+      const btnIssue = document.getElementById("btnIssue");
+      const btnLookup = document.getElementById("btnLookup");
+      const accountDiv = document.getElementById("account");
+      const statusDiv = document.getElementById("status");
+      const resultPre = document.getElementById("lookupResult");
+
+      async function connect() {
+        try {
+          if (!window.ethereum) {
+            alert("Necesitas MetaMask instalado");
+            return;
+          }
+
+          const accounts = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
+
+          accountDiv.innerText = "Cuenta conectada: " + accounts[0];
+
+          provider = new ethers.BrowserProvider(window.ethereum);
+          signer = await provider.getSigner();
+          contract = new ethers.Contract(contractAddress, abi, signer);
+
+          btnIssue.disabled = false;
+          btnLookup.disabled = false;
+          statusDiv.innerText = "Conectado a MetaMask y listo para operar.";
+        } catch (err) {
+          console.error(err);
+          statusDiv.innerText = "Error al conectar: " + err.message;
+        }
+      }
+
+      async function issue() {
+        try {
+          const certId = document.getElementById("certId").value.trim();
+          const studentId = document.getElementById("studentId").value.trim();
+          const degree = document.getElementById("degree").value.trim();
+          const issuedDate = document.getElementById("issuedDate").value;
+          const documentHash = document.getElementById("documentHash").value.trim();
+
+          if (!certId || !studentId || !degree || !issuedDate || !documentHash) {
+            alert("Llena todos los campos para emitir el certificado.");
+            return;
+          }
+
+          statusDiv.innerText = "Enviando transacción de emisión...";
+          const tx = await contract.issueCertificate(
+            certId,
+            studentId,
+            degree,
+            issuedDate,
+            documentHash
+          );
+          statusDiv.innerText = "Tx enviada: " + tx.hash + " (esperando confirmación...)";
+          await tx.wait();
+          statusDiv.innerText = "✅ Certificado emitido con éxito.";
+        } catch (err) {
+          console.error(err);
+          statusDiv.innerText = "Error al emitir: " + (err.reason || err.message);
+        }
+      }
+
+      async function lookup() {
+        try {
+          const certId = document.getElementById("lookupCertId").value.trim();
+          if (!certId) {
+            alert("Ingresa un CertID");
+            return;
+          }
+
+          const cert = await contract.getCertificate(certId);
+          const obj = {
+            studentId: cert.studentId,
+            degree: cert.degree,
+            issuedDate: cert.issuedDate,
+            documentHash: cert.documentHash,
+            issuer: cert.issuer,
+            exists: cert.exists,
+          };
+          resultPre.innerText = JSON.stringify(obj, null, 2);
+        } catch (err) {
+          console.error(err);
+          resultPre.innerText = "Error: " + (err.reason || err.message);
+        }
+      }
+
+      btnConnect.onclick = connect;
+      btnIssue.onclick = issue;
+      btnLookup.onclick = lookup;
+    </script>
+  </body>
+</html>
