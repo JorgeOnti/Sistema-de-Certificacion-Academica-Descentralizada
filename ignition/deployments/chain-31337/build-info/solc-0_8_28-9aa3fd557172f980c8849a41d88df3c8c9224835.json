@@ -1,0 +1,39 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-9aa3fd557172f980c8849a41d88df3c8c9224835",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "userSourceNameMap": {
+    "contracts/AcademicCertificate.sol": "project/contracts/AcademicCertificate.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/AcademicCertificate.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.20;\r\n\r\n/// @title Sistema de Certificación Académica simplificado para demo en Hardhat\r\ncontract AcademicCertificate {\r\n\r\n    struct Certificate {\r\n        string studentId;       // Matrícula o ID del estudiante\r\n        string degree;          // Programa académico\r\n        string issuedDate;      // Fecha de emisión\r\n        string documentHash;    // Hash SHA-256 del documento PDF\r\n        address issuer;         // Dirección de la institución que lo emitió\r\n        bool exists;            // Indica si el certificado está activo\r\n    }\r\n\r\n    // Emisores autorizados (instituciones)\r\n    mapping(address => bool) public authorizedIssuers;\r\n\r\n    // certId => Certificate\r\n    mapping(string => Certificate) private certificates;\r\n\r\n    address public owner;\r\n\r\n    event IssuerAuthorized(address issuer);\r\n    event IssuerRevoked(address issuer);\r\n    event CertificateIssued(string certId, string studentId, string degree, address issuer);\r\n    event CertificateRevoked(string certId, address revokedBy);\r\n\r\n    constructor() {\r\n        owner = msg.sender;\r\n        authorizedIssuers[msg.sender] = true;\r\n        emit IssuerAuthorized(msg.sender);\r\n    }\r\n\r\n    modifier onlyOwner() {\r\n        require(msg.sender == owner, \"Solo el owner puede hacer esto\");\r\n        _;\r\n    }\r\n\r\n    modifier onlyAuthorizedIssuer() {\r\n        require(authorizedIssuers[msg.sender], \"No eres emisor autorizado\");\r\n        _;\r\n    }\r\n\r\n    /// @notice Autoriza a una nueva institucion emisora\r\n    function authorizeIssuer(address _issuer) external onlyOwner {\r\n        authorizedIssuers[_issuer] = true;\r\n        emit IssuerAuthorized(_issuer);\r\n    }\r\n\r\n    /// @notice Revoca permisos a una institucion emisora\r\n    function revokeIssuer(address _issuer) external onlyOwner {\r\n        authorizedIssuers[_issuer] = false;\r\n        emit IssuerRevoked(_issuer);\r\n    }\r\n\r\n    /// @notice Emite un nuevo certificado\r\n    /// @param certId  ID unico del certificado\r\n    /// @param studentId Matricula del estudiante\r\n    /// @param degree Programa academico\r\n    /// @param issuedDate Fecha de emision\r\n    /// @param documentHash Hash SHA-256 del PDF del certificado\r\n    function issueCertificate(\r\n        string calldata certId,\r\n        string calldata studentId,\r\n        string calldata degree,\r\n        string calldata issuedDate,\r\n        string calldata documentHash\r\n    ) external onlyAuthorizedIssuer {\r\n        require(!certificates[certId].exists, \"El certificado ya existe\");\r\n\r\n        certificates[certId] = Certificate({\r\n            studentId: studentId,\r\n            degree: degree,\r\n            issuedDate: issuedDate,\r\n            documentHash: documentHash,\r\n            issuer: msg.sender,\r\n            exists: true\r\n        });\r\n\r\n        emit CertificateIssued(certId, studentId, degree, msg.sender);\r\n    }\r\n\r\n    /// @notice Consulta un certificado por su ID\r\n    function getCertificate(string calldata certId)\r\n        external\r\n        view\r\n        returns (\r\n            string memory studentId,\r\n            string memory degree,\r\n            string memory issuedDate,\r\n            string memory documentHash,\r\n            address issuer,\r\n            bool exists\r\n        )\r\n    {\r\n        Certificate memory cert = certificates[certId];\r\n        return (\r\n            cert.studentId,\r\n            cert.degree,\r\n            cert.issuedDate,\r\n            cert.documentHash,\r\n            cert.issuer,\r\n            cert.exists\r\n        );\r\n    }\r\n\r\n    /// @notice Revoca un certificado (no lo borra, solo lo marca como inexistente)\r\n    function revokeCertificate(string calldata certId) external onlyAuthorizedIssuer {\r\n        require(certificates[certId].exists, \"El certificado no existe\");\r\n        certificates[certId].exists = false;\r\n        emit CertificateRevoked(certId, msg.sender);\r\n    }\r\n}\r\n"
+      }
+    }
+  }
+}

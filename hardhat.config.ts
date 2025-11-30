@@ -3,22 +3,19 @@ import { configVariable, defineConfig } from "hardhat/config";
 
 export default defineConfig({
   plugins: [hardhatToolboxViemPlugin],
+
+  // 👇 Configuración de Solidity SIN profiles, con optimizer + viaIR
   solidity: {
-    profiles: {
-      default: {
-        version: "0.8.28",
+    version: "0.8.28",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
       },
-      production: {
-        version: "0.8.28",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
+      viaIR: true, // <- esto es lo que evita el "Stack too deep"
     },
   },
+
   networks: {
     hardhatMainnet: {
       type: "edr-simulated",
