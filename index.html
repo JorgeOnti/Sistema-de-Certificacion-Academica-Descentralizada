@@ -3,101 +3,286 @@
   <head>
     <meta charset="UTF-8" />
     <title>Certificación Académica Blockchain</title>
+
+    <!-- Bootstrap 5 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Ethers v6 UMD -->
     <script src="https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.umd.min.js"></script>
+
     <style>
       body {
-        font-family: Arial, sans-serif;
-        max-width: 900px;
-        margin: 20px auto;
-        background: #f5f5f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: #0f172a;
+        color: #e5e7eb;
       }
-      h1, h2 {
+
+      h1,
+      h2 {
         text-align: center;
       }
+
+      .page-wrapper {
+        max-width: 1100px;
+        margin: 24px auto 40px auto;
+      }
+
       .card {
-        background: #ffffff;
-        padding: 16px;
-        margin-bottom: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        background: #020617;
+        border-radius: 12px;
+        border: 1px solid #1f2937;
+        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.6);
+        color: #e5e7eb;
       }
-      label {
-        display: block;
-        margin-top: 8px;
-      }
-      input {
-        width: 100%;
-        padding: 6px;
-        margin-top: 2px;
-      }
-      button {
-        margin-top: 12px;
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        background: #007bff;
-        color: white;
-        cursor: pointer;
-      }
-      button:disabled {
-        background: #aaa;
-        cursor: not-allowed;
-      }
-      #status {
-        margin-top: 10px;
+
+      .form-label {
+        margin-top: 0.35rem;
         font-size: 0.9rem;
       }
+
+      .form-control,
+      .form-control:focus {
+        background-color: #020617;
+        border-color: #374151;
+        color: #e5e7eb;
+      }
+
+      .form-control:focus {
+        box-shadow: 0 0 0 0.15rem rgba(59, 130, 246, 0.35);
+      }
+
       pre {
-        background: #222;
-        color: #0f0;
+        background: #020617;
+        color: #bbf7d0;
         padding: 10px;
-        border-radius: 4px;
-        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid #374151;
+        font-size: 0.8rem;
+        max-height: 260px;
+        overflow: auto;
+      }
+
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+      }
+
+      .badge-pill {
+        border-radius: 999px;
+      }
+
+      /* 👇 Colores más claros para que se vean mejor */
+      #network {
+        color: #bfdbfe; /* azul claro */
+      }
+
+      #status {
+        color: #e5e7eb;
+      }
+
+      .status-success {
+        color: #4ade80; /* verde más brillante */
+      }
+
+      .status-error {
+        color: #f97373;
+      }
+
+      /* Contenedor de alertas flotantes */
+      #alertContainer {
+        z-index: 1080;
       }
     </style>
   </head>
   <body>
-    <h1>Certificación Académica en Blockchain</h1>
+    <!-- Alertas flotantes (confirmaciones / errores) -->
+    <div
+      id="alertContainer"
+      class="position-fixed top-0 end-0 p-3"
+    ></div>
 
-    <div class="card">
-      <h2>1. Conexión</h2>
-      <button id="btnConnect">Conectar MetaMask</button>
-      <div id="account"></div>
-      <div id="status"></div>
+    <div class="page-wrapper">
+      <h1 class="mb-1">Certificación Académica en Blockchain</h1>
+      <p class="text-center text-secondary mb-4">
+        Emisión, consulta y revocación de certificados académicos utilizando un
+        contrato inteligente en una red local de Ethereum.
+      </p>
+
+      <!-- 1. Conexión -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h5 mb-0">1. Conexión</h2>
+            <span class="badge bg-secondary badge-pill">
+              MetaMask + Hardhat localhost
+            </span>
+          </div>
+
+          <button id="btnConnect" class="btn btn-primary btn-sm">
+            🦊 Conectar MetaMask
+          </button>
+
+          <div id="account" class="mt-2 small text-success"></div>
+          <div id="network" class="mt-1 small mono"></div>
+
+          <div id="status" class="mt-2 small text-muted"></div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <!-- 2. Emitir -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="h5 mb-0">2. Emitir certificado</h2>
+                <span class="badge bg-info text-dark badge-pill">
+                  Emisor autorizado
+                </span>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">CertID</label>
+                <input
+                  id="certId"
+                  class="form-control form-control-sm"
+                  placeholder="CERT-001"
+                />
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">Matrícula (studentId)</label>
+                <input
+                  id="studentId"
+                  class="form-control form-control-sm"
+                  placeholder="A01234567"
+                />
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">Programa (degree)</label>
+                <input
+                  id="degree"
+                  class="form-control form-control-sm"
+                  placeholder="Ingeniería en Sistemas"
+                />
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">Fecha de emisión</label>
+                <input
+                  id="issuedDate"
+                  type="date"
+                  class="form-control form-control-sm"
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Hash SHA-256 del PDF</label>
+                <input
+                  id="documentHash"
+                  class="form-control form-control-sm mono"
+                  placeholder="b3f4c1a2d5e6f7c8b9a0011223344..."
+                />
+              </div>
+
+              <button id="btnIssue" class="btn btn-success btn-sm" disabled>
+                📄 Emitir certificado
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Consultar -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="h5 mb-0">3. Consultar certificado</h2>
+                <span class="badge bg-light text-dark badge-pill">
+                  Lectura pública
+                </span>
+              </div>
+
+              <div class="row g-2 align-items-end mb-2">
+                <div class="col-8">
+                  <label class="form-label">CertID</label>
+                  <input
+                    id="lookupCertId"
+                    class="form-control form-control-sm"
+                    placeholder="CERT-001"
+                  />
+                </div>
+                <div class="col-4">
+                  <button
+                    id="btnLookup"
+                    class="btn btn-outline-primary btn-sm w-100"
+                    disabled
+                  >
+                    🔎 Consultar
+                  </button>
+                </div>
+              </div>
+
+              <pre id="lookupResult" class="mt-2">{ }</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Revocar -->
+      <div class="card mt-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h5 mb-0">4. Revocar certificado</h2>
+            <span class="badge bg-danger badge-pill">Acción administrativa</span>
+          </div>
+
+          <div class="row g-2 align-items-end">
+            <div class="col-8 col-md-6">
+              <label class="form-label">CertID a revocar</label>
+              <input
+                id="revokeCertId"
+                class="form-control form-control-sm"
+                placeholder="CERT-001"
+              />
+            </div>
+            <div class="col-4 col-md-3">
+              <button
+                id="btnRevoke"
+                class="btn btn-danger btn-sm w-100"
+                disabled
+              >
+                🛑 Revocar
+              </button>
+            </div>
+          </div>
+
+          <div id="revokeStatus" class="mt-2 small text-muted"></div>
+          <p class="mt-2 mb-0 small text-secondary">
+            La revocación no borra el registro del historial; solo marca el
+            certificado como <span class="mono">exists = false</span>, manteniendo
+            trazabilidad.
+          </p>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>2. Emitir certificado</h2>
-      <label>CertID</label>
-      <input id="certId" placeholder="CERT-001" />
-      <label>Matrícula (studentId)</label>
-      <input id="studentId" placeholder="A01234567" />
-      <label>Programa (degree)</label>
-      <input id="degree" placeholder="Ingenieria en Sistemas" />
-      <label>Fecha de emisión</label>
-      <input id="issuedDate" type="date" />
-      <label>Hash SHA-256 del PDF</label>
-      <input
-        id="documentHash"
-        placeholder="b3f4c1a2d5e6..."
-      />
-      <button id="btnIssue" disabled>Emitir certificado</button>
-    </div>
-
-    <div class="card">
-      <h2>3. Consultar certificado</h2>
-      <label>CertID</label>
-      <input id="lookupCertId" placeholder="CERT-001" />
-      <button id="btnLookup" disabled>Consultar</button>
-      <pre id="lookupResult">{ }</pre>
-    </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-      const contractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+     // 👇 Asegúrate de actualizar esta dirección cuando vuelvas a desplegar el contrato
+      const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
       const abi = [
         "function issueCertificate(string certId,string studentId,string degree,string issuedDate,string documentHash) external",
-        "function getCertificate(string certId) view returns (string studentId,string degree,string issuedDate,string documentHash,address issuer,bool exists)"
+        "function getCertificate(string certId) view returns (string studentId,string degree,string issuedDate,string documentHash,address issuer,bool exists)",
+        "function revokeCertificate(string certId) external"
       ];
 
       let provider;
@@ -107,9 +292,33 @@
       const btnConnect = document.getElementById("btnConnect");
       const btnIssue = document.getElementById("btnIssue");
       const btnLookup = document.getElementById("btnLookup");
+      const btnRevoke = document.getElementById("btnRevoke");
+
       const accountDiv = document.getElementById("account");
+      const networkDiv = document.getElementById("network");
       const statusDiv = document.getElementById("status");
       const resultPre = document.getElementById("lookupResult");
+      const revokeStatusDiv = document.getElementById("revokeStatus");
+      const alertContainer = document.getElementById("alertContainer");
+
+      // 🔔 Helper para mostrar alertas tipo "compra confirmada"
+      function showAlert(type, message) {
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = `
+          <div class="alert alert-${type} alert-dismissible fade show shadow" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+          </div>
+        `;
+        const alertElement = wrapper.firstElementChild;
+        alertContainer.appendChild(alertElement);
+
+        // Cerrar automático en 5 segundos
+        setTimeout(() => {
+          const alertInstance = bootstrap.Alert.getOrCreateInstance(alertElement);
+          alertInstance.close();
+        }, 5000);
+      }
 
       async function connect() {
         try {
@@ -122,18 +331,41 @@
             method: "eth_requestAccounts",
           });
 
-          accountDiv.innerText = "Cuenta conectada: " + accounts[0];
+          const selected = accounts[0];
+          accountDiv.innerText = "Cuenta conectada: " + selected;
 
           provider = new ethers.BrowserProvider(window.ethereum);
           signer = await provider.getSigner();
           contract = new ethers.Contract(contractAddress, abi, signer);
 
+          const network = await provider.getNetwork();
+          networkDiv.innerText =
+            "Red: " +
+            network.name +
+            " (chainId " +
+            Number(network.chainId) +
+            ")";
+
           btnIssue.disabled = false;
           btnLookup.disabled = false;
+          btnRevoke.disabled = false;
+
           statusDiv.innerText = "Conectado a MetaMask y listo para operar.";
+          statusDiv.className = "mt-2 small status-success";
+
+          showAlert(
+            "info",
+            "MetaMask conectado correctamente. Puedes emitir, consultar y revocar certificados."
+          );
         } catch (err) {
           console.error(err);
-          statusDiv.innerText = "Error al conectar: " + err.message;
+          statusDiv.innerText =
+            "Error al conectar: " + (err.reason || err.message);
+          statusDiv.className = "mt-2 small status-error";
+          showAlert(
+            "danger",
+            "Error al conectar con MetaMask: " + (err.reason || err.message)
+          );
         }
       }
 
@@ -143,7 +375,8 @@
           const studentId = document.getElementById("studentId").value.trim();
           const degree = document.getElementById("degree").value.trim();
           const issuedDate = document.getElementById("issuedDate").value;
-          const documentHash = document.getElementById("documentHash").value.trim();
+          const documentHash =
+            document.getElementById("documentHash").value.trim();
 
           if (!certId || !studentId || !degree || !issuedDate || !documentHash) {
             alert("Llena todos los campos para emitir el certificado.");
@@ -151,6 +384,8 @@
           }
 
           statusDiv.innerText = "Enviando transacción de emisión...";
+          statusDiv.className = "mt-2 small";
+
           const tx = await contract.issueCertificate(
             certId,
             studentId,
@@ -158,18 +393,28 @@
             issuedDate,
             documentHash
           );
-          statusDiv.innerText = "Tx enviada: " + tx.hash + " (esperando confirmación...)";
-          await tx.wait();
-          statusDiv.innerText = "✅ Certificado emitido con éxito.";
+          statusDiv.innerText =
+            "Tx enviada: " + tx.hash + " (esperando confirmación...)";
+          const receipt = await tx.wait();
+          const msg =
+            "✅ Certificado emitido correctamente (bloque " +
+            receipt.blockNumber +
+            ").";
+          statusDiv.innerText = msg;
+          statusDiv.className = "mt-2 small status-success";
+
+          showAlert("success", msg);
         } catch (err) {
           console.error(err);
-          statusDiv.innerText = "Error al emitir: " + (err.reason || err.message);
+          showAlert("danger", "No tienes permisos para emitir certificados.");
         }
       }
 
       async function lookup() {
         try {
-          const certId = document.getElementById("lookupCertId").value.trim();
+          const certId = document
+            .getElementById("lookupCertId")
+            .value.trim();
           if (!certId) {
             alert("Ingresa un CertID");
             return;
@@ -177,6 +422,7 @@
 
           const cert = await contract.getCertificate(certId);
           const obj = {
+            certId,
             studentId: cert.studentId,
             degree: cert.degree,
             issuedDate: cert.issuedDate,
@@ -187,13 +433,45 @@
           resultPre.innerText = JSON.stringify(obj, null, 2);
         } catch (err) {
           console.error(err);
-          resultPre.innerText = "Error: " + (err.reason || err.message);
+          showAlert("danger", "Hubo un error al consultar el certificado.");
+        }
+      }
+
+      async function revoke() {
+        try {
+          const certId = document.getElementById("revokeCertId").value.trim();
+          if (!certId) {
+            alert("Ingresa el CertID que deseas revocar.");
+            return;
+          }
+
+          revokeStatusDiv.innerText =
+            "Enviando transacción de revocación...";
+          revokeStatusDiv.className = "mt-2 small";
+
+          const tx = await contract.revokeCertificate(certId);
+          revokeStatusDiv.innerText =
+            "Tx enviada: " + tx.hash + " (esperando confirmación...)";
+          const receipt = await tx.wait();
+
+          const msg =
+            "🛑 Certificado revocado correctamente (bloque " +
+            receipt.blockNumber +
+            ").";
+          revokeStatusDiv.innerText = msg;
+          revokeStatusDiv.className = "mt-2 small status-success";
+
+          showAlert("warning", msg);
+        } catch (err) {
+          console.error(err);
+          showAlert("danger","No tienes permisos para revocar certificados.");
         }
       }
 
       btnConnect.onclick = connect;
       btnIssue.onclick = issue;
       btnLookup.onclick = lookup;
+      btnRevoke.onclick = revoke;
     </script>
   </body>
 </html>
